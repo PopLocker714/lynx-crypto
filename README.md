@@ -2,6 +2,10 @@
 
 > **English** · [Русский](./README.ru.md)
 
+[![npm](https://img.shields.io/npm/v/@lynx-lab/crypto?color=cb3837&logo=npm)](https://www.npmjs.com/package/@lynx-lab/crypto)
+[![CI](https://github.com/PopLocker714/lynx-crypto/actions/workflows/ci.yml/badge.svg)](https://github.com/PopLocker714/lynx-crypto/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@lynx-lab/crypto?color=blue)](./LICENSE)
+
 `crypto.getRandomValues` and `crypto.randomUUID` for [Lynx](https://lynxjs.org).
 
 Lynx 4.0.1 ships **no `crypto` global**. Searching `getRandomValues` and `crypto.subtle`
