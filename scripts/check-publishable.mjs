@@ -23,6 +23,7 @@ const required = [
   'ios/src/LynxCryptoModule.m',
   'LICENSE',
   'README.md',
+  'README.ru.md',
 ]
 
 const forbidden = [

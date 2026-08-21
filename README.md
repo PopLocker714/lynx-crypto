@@ -1,32 +1,34 @@
 # @lynx-lab/crypto
 
-`crypto.getRandomValues` и `crypto.randomUUID` для [Lynx](https://lynxjs.org).
+> **English** · [Русский](./README.ru.md)
 
-В Lynx 4.0.1 **нет глобала `crypto`**: поиск по `getRandomValues` и `crypto.subtle`
-в `lynx-family/lynx` и `lynx-family/primjs` даёт ноль результатов, а всё дерево
-PrimJS (660 путей) не содержит ни одного файла по `random|crypto|entropy`.
-Без CSPRNG отказываются работать noble-curves, tweetnacl, libsignal и всё,
-что делает PKCE или ключи идемпотентности. `Math.random` на QuickJS не считается.
+`crypto.getRandomValues` and `crypto.randomUUID` for [Lynx](https://lynxjs.org).
 
-Под капотом `java.security.SecureRandom` на Android и `SecRandomCopyBytes` на iOS.
+Lynx 4.0.1 ships **no `crypto` global**. Searching `getRandomValues` and `crypto.subtle`
+across `lynx-family/lynx` and `lynx-family/primjs` returns zero results, and the entire
+PrimJS tree (660 paths) contains no file matching `random|crypto|entropy`. Without a
+CSPRNG, noble-curves, tweetnacl, libsignal and anything doing PKCE or idempotency keys
+refuse to run. `Math.random` on QuickJS does not count.
 
-## Установка
+Backed by `java.security.SecureRandom` on Android and `SecRandomCopyBytes` on iOS.
+
+## Install
 
 ```sh
 bun add @lynx-lab/crypto
 ```
 
-Дальше по одному шагу на платформу, потому что у Sparkling нет системы
-config-плагинов и пакет не может дописать чужие файлы сборки.
+Then one step per platform, because Sparkling has no config-plugin system and a package
+cannot write into someone else's build files.
 
-**Android** — ничего. Библиотека линкуется через Autolink, разрешений не требует,
-в манифест ничего не мержит.
+**Android** — nothing. The library links through Autolink, requires no permissions, and
+merges nothing into your manifest.
 
-**iOS** — `pod install` после установки пакета.
+**iOS** — run `pod install` after installing the package.
 
-Ни `Info.plist`, ни entitlements, ни разрешений не нужно ни на одной платформе.
+No `Info.plist` keys, no entitlements, no permissions on either platform.
 
-## Использование
+## Usage
 
 ```ts
 import { getRandomValues, randomUUID } from '@lynx-lab/crypto'
@@ -35,55 +37,55 @@ const key = getRandomValues(new Uint8Array(32))
 const id = randomUUID() // '3f2504e0-4f89-41d3-9a0c-0305e82c3301'
 ```
 
-Массив заполняется **на месте**, и возвращается тот же самый объект, как требует
-спецификация WebCrypto. Это важно для библиотек снизу по стеку.
+The array is filled **in place** and the same object is returned, as the WebCrypto spec
+requires. That matters to every library downstream of you.
 
-Если библиотека вынюхивает `globalThis.crypto`, поставь его один раз на старте:
+If a library sniffs for `globalThis.crypto`, install it once at startup:
 
 ```ts
 import { install } from '@lynx-lab/crypto'
 install()
 ```
 
-`install()` это opt-in, а не побочный эффект импорта: вопрос, кому в Lynx
-принадлежит право ставить глобалы, пока открыт.
+`install()` is opt-in rather than a side effect of importing: who owns the right to set
+globals in Lynx is still an open question.
 
-### Важно про поток
+### Thread requirement
 
-`NativeModules` в Lynx существует **только на фоновом потоке (BTS)** и на главном
-потоке равен `undefined`. Обе функции обязаны вызываться с фонового потока.
+`NativeModules` in Lynx exists **only on the background (BTS) thread** and is `undefined`
+on the main thread. Both functions must be called from the background thread.
 
 ## API
 
-| Функция | Что делает |
+| Function | What it does |
 |---|---|
-| `getRandomValues(array)` | Заполняет целочисленный TypedArray, возвращает **тот же объект**. Бросает `QuotaExceededError` свыше 65536 байт и `TypeMismatchError` на массивы с плавающей точкой и на `DataView` |
+| `getRandomValues(array)` | Fills an integer TypedArray and returns **the same object**. Throws `QuotaExceededError` above 65536 bytes, and `TypeMismatchError` for float arrays and `DataView` |
 | `randomUUID()` | Lowercase RFC 4122 v4 |
-| `install()` | Ставит обе функции на `globalThis.crypto`, не затирая существующие |
-| `setNativeModule(m)` | Шов для тестов. `null` возвращает настоящий поиск |
+| `install()` | Puts both functions on `globalThis.crypto` without overwriting existing ones |
+| `setNativeModule(m)` | Test seam. `null` restores real lookup |
 
-Экспорт `@lynx-lab/crypto/testing` даёт `createFakeCrypto()` для тестов
-и для работы в Lynx Explorer, где нативной половины ещё нет.
-**Он не криптостойкий** и в проде использоваться не должен.
+The `@lynx-lab/crypto/testing` export provides `createFakeCrypto()` for tests and for
+working in Lynx Explorer before the native half is linked. **It is not cryptographically
+secure** and must never reach production.
 
-## Если модуль не нашёлся
+## When the module is not found
 
-Пайплайн Lynx падает молча, поэтому ошибка пакета сразу называет обе причины.
+The Lynx pipeline fails silently, so this package's error names both causes up front.
 
-**Android.** Смотри `adb logcat | grep "Skip unavailable Lynx library provider"`.
-Это сообщение означает, что процессор аннотаций не отработал. Gradle-плагин Lynx
-прокидывает `-Alynx.library.packageName`, но **сам процессор не добавляет**,
-поэтому библиотека объявляет `kapt("org.lynxsdk.lynx:lynx-processor:4.0.1")` сама.
+**Android.** Check `adb logcat | grep "Skip unavailable Lynx library provider"`. That
+message means the annotation processor did not run. Lynx's Gradle plugin passes
+`-Alynx.library.packageName` but **does not add the processor itself**, so the library
+declares `kapt("org.lynxsdk.lynx:lynx-processor:4.0.1")` on its own.
 
-**iOS.** Проверь, что в `Pods/` есть сгенерированный реестр autolink с упоминанием
-`LynxCryptoModule`. Если нет, маркер `@LynxNativeModule("...")` не сматчился.
-Регулярка гема требует ровно это написание и допускает между маркером
-и `@interface` только пробельные символы.
+**iOS.** Check that `Pods/` contains a generated Autolink registry mentioning
+`LynxCryptoModule`. If it does not, the `@LynxNativeModule("...")` marker was not matched.
+The gem's regex requires that exact spelling and allows only whitespace between the marker
+and `@interface`.
 
-**Ручной запасной путь**, если autolink не работает:
+**Manual fallback** if Autolink is not working:
 
 ```kotlin
-// Android, при старте приложения
+// Android, at app startup
 LynxEnv.inst().registerModule("LynxCryptoModule", LynxCryptoModule::class.java)
 ```
 
@@ -92,27 +94,27 @@ LynxEnv.inst().registerModule("LynxCryptoModule", LynxCryptoModule::class.java)
 [config registerModule:LynxCryptoModule.class];
 ```
 
-## Заметки о реализации
+## Implementation notes
 
-**Почему base64, а не `byte[]`.** `byte[]` действительно легальный тип возврата
-(`LynxMethodWrapper.returnTypeToChar` даёт `'a'`) и прилетает в JS настоящим
-`ArrayBuffer`. Но `String` это `'T'` из `commonTypeToChar`, ветки, общей для
-параметров и возвратов, а на iOS он едет по `_C_ID` → `NSString`, самому
-исхоженному пути в `PerformMethodInvocation`. При 16–32 байтах на вызов накладные
-расходы вызова полностью перекрывают кодирование. `byte[]` это патч на 1.1,
-когда конвейер уже доказан.
+**Why base64 rather than `byte[]`.** `byte[]` genuinely is a legal return type —
+`LynxMethodWrapper.returnTypeToChar` maps it to `'a'` — and it arrives in JS as a real
+`ArrayBuffer`. But `String` is `'T'` from `commonTypeToChar`, the branch shared by both
+parameters and returns, and on iOS it rides `_C_ID` → `NSString`, the most heavily
+exercised path in `PerformMethodInvocation`. At the 16–32 bytes per call that
+`getRandomValues` actually gets asked for, the encoding is free. `byte[]` is a 1.1 patch,
+once the pipeline is proven.
 
-**Почему TypedArray не передаётся в натив.** Он не проходит вообще:
-`LynxJSIModule::invokeMethod` принимает аргумент только если `o.isArrayBuffer()`,
-а `Uint8Array` этой проверки не проходит. И даже настоящий `ArrayBuffer`
-копируется memcpy на границе JSI, а затем ещё раз на платформенном слое.
-Мутация на месте невозможна в принципе, поэтому заполняет массив JS-обёртка.
-Спецификация при этом соблюдена: возвращается тот же объект.
+**Why the TypedArray never crosses into native.** It cannot:
+`LynxJSIModule::invokeMethod` accepts an argument only if `o.isArrayBuffer()`, and a
+`Uint8Array` fails that check. Even a true `ArrayBuffer` is memcpy'd at the JSI boundary
+(`ValueUtils::ConvertPiperToArrayBuffer`) and again at the platform layer. In-place
+mutation from native is structurally impossible, so the JS shim does the write — which is
+how spec compliance survives: the same object comes back.
 
-**Никаких бросков из натива.** `LynxModuleDarwin::InvokeMethod` оборачивает вызов
-в `@try/@catch`, пишет в лог и до JS не доводит ничего. Все ошибки спецификации
-поднимаются в TypeScript.
+**Nothing is thrown from native.** `LynxModuleDarwin::InvokeMethod` wraps the whole
+invocation in `@try/@catch`, logs, and delivers nothing to JS. Every spec error is raised
+in TypeScript instead.
 
-## Лицензия
+## License
 
 MIT

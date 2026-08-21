@@ -46,7 +46,8 @@
     "ios",
     "lynx.lib.json",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "README.ru.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
