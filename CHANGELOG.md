@@ -1,3 +1,13 @@
+## [1.0.2](https://github.com/[secure]/lynx-crypto/compare/v1.0.1...v1.0.2) (2026-08-21)
+
+### 🐛 Bug Fixes
+
+* собираться на Lynx 3.x, снять пин версии в podspec ([76c8e1d](https://github.com/[secure]/lynx-crypto/commit/76c8e1d7a618ea0d87daa7797e53e59a3a7d58b4)), closes [#ifndef](https://github.com/[secure]/lynx-crypto/issues/ifndef)
+
+### 🛠️ Other changes
+
+* убрать NPM_TOKEN, публикация идёт через OIDC ([c0fd472](https://github.com/[secure]/lynx-crypto/commit/c0fd472159a4fbcdd986dcf3ebd4ddabd7a7cb6b))
+
 ## [1.0.1](https://github.com/[secure]/lynx-crypto/compare/v1.0.0...v1.0.1) (2026-08-21)
 
 ### 📚 Documentation
