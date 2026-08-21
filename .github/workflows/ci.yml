@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.0
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
@@ -37,6 +37,27 @@ jobs:
       # библиотека, и заметить это без проверки нельзя.
       - name: Проверить содержимое тарбола
         run: node scripts/check-publishable.mjs
+
+  supply-chain:
+    name: Цепочка поставок — audit, дубли, лицензии
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install
+      # Уязвимости в дереве зависимостей. Падает, если найдены.
+      - name: bun audit
+        run: bun audit
+      # Две версии одного пакета в bun.lock это будущий баг, который
+      # воспроизводится только у потребителя. Проверка стоит миллисекунды.
+      - name: bun dedupe --check
+        run: bun dedupe --check
+      # Опенсорсный пакет обязан знать, что он тянет по лицензиям.
+      # Не падает, просто печатает в лог для аудита.
+      - name: bun pm licenses
+        run: bun pm licenses || true
 
   android:
     name: Android — компиляция
