@@ -1,6 +1,6 @@
 {
   "name": "@lynx-lab/crypto",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cryptographically secure random values for Lynx — crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
   "license": "MIT",
   "author": "PopLocker714",
