@@ -16,7 +16,10 @@ Pod::Spec.new do |s|
   s.source_files = "src/**/*.{h,m}"
   s.frameworks   = "Security"
 
-  # >= 3.9, а не ~> 4.0: шаблон Sparkling пинит под Lynx на 3.9.0, и
-  # ~> 4.0 сделал бы набор требований неразрешимым.
-  s.dependency "Lynx", ">= 3.9"
+  # Без ограничения версии, и это проверено на устройстве.
+  # Зависимость нужна ради header search paths (без неё
+  # <Lynx/LynxModule.h> не находится), но любой пин ломает резолв:
+  # шаблон Sparkling пинит Lynx 3.6.0, а поды Lynx 4.x на CocoaPods
+  # не резолвятся вовсе из-за конфликта LynxServiceAPI.
+  s.dependency "Lynx"
 end

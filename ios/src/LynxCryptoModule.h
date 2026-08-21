@@ -1,6 +1,20 @@
 #import <Foundation/Foundation.h>
 #import <Lynx/LynxModule.h>
 
+
+// Макрос LynxNativeModule появился только в Lynx 4.x. На 3.x его нет, и тогда
+// `@LynxNativeModule("...")` это `@` плюс неизвестный идентификатор, то есть
+// ошибка компиляции `unexpected '@' in program`, а следом ещё и
+// `cannot use 'super' because it is a root class`, потому что @interface
+// разбирается неверно.
+//
+// Объявляем сами ровно тем же, чем Lynx 4.x: раскрывается в
+// `@class LynxNativeModuleMarker;` и нужен исключительно для того, чтобы
+// регулярка гема cocoapods-lynx-library нашла маркер.
+#ifndef LynxNativeModule
+#define LynxNativeModule(module_name) class LynxNativeModuleMarker;
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
