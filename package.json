@@ -1,0 +1,84 @@
+{
+  "name": "@lynx-lab/crypto",
+  "version": "0.0.0-development",
+  "description": "Cryptographically secure random values for Lynx — crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
+  "license": "MIT",
+  "author": "PopLocker714",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PopLocker714/lynx-crypto.git"
+  },
+  "bugs": "https://github.com/PopLocker714/lynx-crypto/issues",
+  "homepage": "https://github.com/PopLocker714/lynx-crypto#readme",
+  "keywords": [
+    "lynx",
+    "lynxjs",
+    "lynx-native-module",
+    "crypto",
+    "getRandomValues",
+    "csprng",
+    "uuid",
+    "webcrypto"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./lynx.lib.json": "./lynx.lib.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/**/*.ts",
+    "!src/__tests__",
+    "android",
+    "!android/build",
+    "!android/.gradle",
+    "ios",
+    "lynx.lib.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "prepack": "bun run build",
+    "prepublishOnly": "node scripts/check-publishable.mjs",
+    "release": "semantic-release"
+  },
+  "peerDependencies": {
+    "@lynx-js/types": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@lynx-js/types": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@lynx-js/types": "^4.1.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "conventional-changelog-conventionalcommits": "^9.0.0",
+    "semantic-release": "^25.0.9",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "packageManager": "bun@1.3.10"
+}

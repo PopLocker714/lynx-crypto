@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      # Нужен для npm Trusted Publishing (OIDC). Уже стоит, чтобы после
+      # публикации 1.0.0 можно было выключить NPM_TOKEN одним вычитанием.
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # semantic-release нужна полная история для анализа коммитов
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # 22.14.0 это пол npm для trusted publishing, не опускать
+          node-version: 22.14.0
+      - name: Setup Bun.js
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Cache bun dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install npm dependencies (bun)
+        run: bun install
+
+      - name: Build lib
+        run: bun run build
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ВРЕМЕННО. OIDC не может опубликовать ПЕРВУЮ версию пакета:
+          # страница настроек trusted publisher появляется только после того,
+          # как пакет существует. После выхода 1.0.0 включить trusted publisher
+          # на npmjs.com и удалить обе строки ниже.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+          GIT_AUTHOR_NAME: ${{ github.actor }}
+          GIT_AUTHOR_EMAIL: '${{ github.actor }}@users.noreply.github.com'
+          GIT_COMMITTER_NAME: ${{ github.actor }}
+          GIT_COMMITTER_EMAIL: '${{ github.actor }}@users.noreply.github.com'
+        run: bun run release
