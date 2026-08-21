@@ -1,11 +1,13 @@
-# Как здесь работать
+# Contributing
 
-## Коммиты определяют версию
+> **English** · [Русский](./CONTRIBUTING.ru.md)
 
-Версия не проставляется руками. `semantic-release` читает историю коммитов
-и решает сам, поэтому префикс коммита это и есть заявка на версию.
+## Commits decide the version
 
-| Префикс | Бамп | Секция в CHANGELOG |
+Versions are never set by hand. `semantic-release` reads the commit history and decides,
+so a commit prefix is a version claim.
+
+| Prefix | Bump | CHANGELOG section |
 |---|---|---|
 | `feat:` | minor | ✨ Features |
 | `fix:` | patch | 🐛 Bug Fixes |
@@ -13,11 +15,11 @@
 | `refactor:` | patch | 🔄 Code Refactors |
 | `docs:` | patch | 📚 Documentation |
 | `chore:` | patch | 🛠️ Other changes |
-| `BREAKING CHANGE:` в теле | major | ⚠ отдельной секцией |
+| `BREAKING CHANGE:` in the body | major | its own section |
 
-Коммит без известного префикса релиз не вызывает.
+A commit with no recognised prefix triggers no release.
 
-## Локальные проверки
+## Local checks
 
 ```sh
 bun run typecheck
@@ -27,26 +29,38 @@ bun run build
 node scripts/check-publishable.mjs
 ```
 
-Последняя обязательна и не декоративна: Autolink компилирует нативные исходники
-у потребителя, поэтому тарбол без `android/` или `ios/` это мёртвая библиотека,
-и узнать об этом можно только в чужом приложении.
+That last one is mandatory and not decorative: Autolink compiles the native sources on the
+consumer's machine, so a tarball missing `android/` or `ios/` is a dead library, and the
+only place you would find out is inside someone else's app.
 
-Компиляция Android без хостового приложения:
+Compiling the Android half without a host app:
 
 ```sh
 cd android-check && gradle :lynx-crypto:assembleRelease
 ```
 
-## Релиз
+## Documentation comes in two languages
 
-Actions → Release → Run workflow. Только вручную, только с `main`.
+Every doc file has an English original and a Russian counterpart: `README.md` and
+`README.ru.md`, `CONTRIBUTING.md` and `CONTRIBUTING.ru.md`. Both READMEs ship in the npm
+tarball and both are enforced by `check-publishable.mjs`.
 
-## Проверка на устройстве
+Editing one without the other is an unfinished change. The Russian version is a full
+translation, not a shortened summary.
 
-Юнит-тесты гоняют TS-половину против фейка. Нативную половину они не трогают
-вообще, поэтому перед каждым релизом, меняющим `android/` или `ios/`, нужен
-реальный прогон в Lynx-приложении на обеих платформах.
+## Release
 
-Что проверять: модуль вообще нашёлся (иначе см. раздел README про молчаливые
-отказы), длина буфера совпадает с запрошенной, и два подряд вызова дают
-разные байты.
+Actions → Release → Run workflow. Manual only, `main` only.
+
+Tick `dry_run` to compute the next version and preview the changelog without publishing
+anything.
+
+## Device check
+
+Unit tests exercise the TypeScript half against a fake. They never touch the native half,
+so any release that changes `android/` or `ios/` needs a real run inside a Lynx app on
+both platforms.
+
+What to check: the module is found at all (otherwise see the README section on silent
+failures), the buffer length matches what was requested, and two consecutive calls return
+different bytes.
