@@ -47,19 +47,19 @@ export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
   if (!ArrayBuffer.isView(array) || array instanceof DataView) {
     throw domError(
       'TypeMismatchError',
-      '@lynx-lab/crypto: getRandomValues() ожидает целочисленный TypedArray'
+      '@lynx-lab/crypto: getRandomValues() expects an integer TypedArray'
     )
   }
   if (isFloatView(array)) {
     throw domError(
       'TypeMismatchError',
-      '@lynx-lab/crypto: массивы с плавающей точкой не допускаются'
+      '@lynx-lab/crypto: float typed arrays are not allowed'
     )
   }
   if (array.byteLength > MAX_BYTES) {
     throw domError(
       'QuotaExceededError',
-      `@lynx-lab/crypto: byteLength ${array.byteLength} превышает ${MAX_BYTES}`
+      `@lynx-lab/crypto: byteLength ${array.byteLength} exceeds ${MAX_BYTES}`
     )
   }
   if (array.byteLength === 0) return array
@@ -75,7 +75,7 @@ export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
     // что нативный CSPRNG отказал или мост обрезал. Оба случая должны быть громкими.
     view.fill(0)
     throw new Error(
-      `@lynx-lab/crypto: натив вернул ${written} из ${array.byteLength} байт`
+      `@lynx-lab/crypto: native returned ${written} of ${array.byteLength} bytes`
     )
   }
 
@@ -87,7 +87,7 @@ export function randomUUID(): UUID {
   const value = getNativeModule().randomUUID()
   if (!UUID_V4.test(value)) {
     throw new Error(
-      `@lynx-lab/crypto: натив вернул из randomUUID() не-v4 значение: ${value}`
+      `@lynx-lab/crypto: native randomUUID() returned a non-v4 value: ${value}`
     )
   }
   return value as UUID
@@ -110,8 +110,8 @@ export function install(): void {
     if (typeof c.randomUUID !== 'function') c.randomUUID = randomUUID
   } catch (cause) {
     throw new Error(
-      '@lynx-lab/crypto: не удалось установить globalThis.crypto; импортируй ' +
-        'именованные экспорты напрямую',
+      '@lynx-lab/crypto: could not install onto globalThis.crypto; import the ' +
+        'named exports directly instead',
       { cause }
     )
   }

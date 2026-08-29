@@ -82,14 +82,14 @@ describe('getRandomValues', () => {
   it('короткое чтение обнуляет буфер и громко падает', () => {
     setNativeModule(createFakeCrypto({ truncateTo: 4 }))
     const a = new Uint8Array(16)
-    expect(() => getRandomValues(a)).toThrowError(/вернул 4 из 16/)
+    expect(() => getRandomValues(a)).toThrowError(/returned 4 of 16/)
     expect(a.every((b) => b === 0)).toBe(true)
   })
 
   it('отказ нативного CSPRNG это ошибка, а не тихий нуль', () => {
     setNativeModule(createFakeCrypto({ fail: true }))
     expect(() => getRandomValues(new Uint8Array(16))).toThrowError(
-      /вернул 0 из 16/
+      /returned 0 of 16/
     )
   })
 })

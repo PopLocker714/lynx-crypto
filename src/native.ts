@@ -28,8 +28,12 @@ export function getNativeModule(): LynxCryptoNative {
 
   if (typeof NativeModules === 'undefined' || NativeModules === null) {
     throw new Error(
-      '@lynx-lab/crypto: `NativeModules` недоступен. Этот код обязан выполняться ' +
-        'на фоновом потоке (BTS): на главном потоке NativeModules не существует.'
+      '@lynx-lab/crypto: `NativeModules` is unavailable, so this call is running ' +
+        'on the main thread.\n' +
+        '  In ReactLynx, code at MODULE SCOPE runs on BOTH threads, so a call at ' +
+        'the top level of a file fails exactly like this.\n' +
+        '  Call it from inside a component, from an effect, or from anything that ' +
+        'is background-thread (BTS) by construction.'
     )
   }
 
@@ -43,15 +47,14 @@ export function getNativeModule(): LynxCryptoNative {
     typeof candidate.randomUUID !== 'function'
   ) {
     throw new Error(
-      `@lynx-lab/crypto: нативный модуль "${MODULE_NAME}" не зарегистрирован.\n` +
-        '  Android: смотри `adb logcat | grep "Skip unavailable Lynx library provider"`. ' +
-        'Это сообщение означает, что процессор аннотаций kapt не отработал: ' +
-        'библиотека обязана объявить id("org.jetbrains.kotlin.kapt") и ' +
-        'kapt("org.lynxsdk.lynx:lynx-processor:4.0.1").\n' +
-        '  iOS: проверь, что в Pods/ есть сгенерированный реестр autolink с ' +
-        'упоминанием LynxCryptoModule. Если нет, маркер @LynxNativeModule("...") ' +
-        'не сматчился.\n' +
-        '  Ручной запасной путь для обеих платформ описан в README.'
+      `@lynx-lab/crypto: native module "${MODULE_NAME}" is not registered.\n` +
+        '  Android: check `adb logcat | grep "Skip unavailable Lynx library provider"`. ' +
+        'That message means the kapt annotation processor did not run — the library ' +
+        'must declare id("org.jetbrains.kotlin.kapt") and ' +
+        'kapt("org.lynxsdk.lynx:lynx-processor").\n' +
+        '  iOS: check that Pods/ contains a generated Lynx autolink registry naming ' +
+        'LynxCryptoModule. If not, the @LynxNativeModule("...") marker was not matched.\n' +
+        '  Manual fallback for both platforms: see the README.'
     )
   }
 

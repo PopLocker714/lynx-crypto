@@ -59,6 +59,17 @@ globals in Lynx is still an open question.
 `NativeModules` in Lynx exists **only on the background (BTS) thread** and is `undefined`
 on the main thread. Both functions must be called from the background thread.
 
+**The trap:** in ReactLynx, code at **module scope runs on BOTH threads**. So this fails
+every time, on the main-thread half:
+
+```ts
+// ❌ top level of a file — also runs on the main thread
+const key = getRandomValues(new Uint8Array(32))
+```
+
+Call it from inside a component, from an effect, or from anything that is
+background-thread by construction.
+
 ## API
 
 | Function | What it does |

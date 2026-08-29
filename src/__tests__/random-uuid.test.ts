@@ -33,6 +33,6 @@ describe('randomUUID', () => {
 
   it('громко падает, если натив вернул не-v4', () => {
     setNativeModule(createFakeCrypto({ badUuid: true }))
-    expect(() => randomUUID()).toThrowError(/не-v4/)
+    expect(() => randomUUID()).toThrowError(/non-v4/)
   })
 })
