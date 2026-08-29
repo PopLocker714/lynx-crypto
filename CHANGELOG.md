@@ -1,3 +1,13 @@
+## [1.0.3](https://github.com/[secure]/lynx-crypto/compare/v1.0.2...v1.0.3) (2026-08-29)
+
+### 🐛 Bug Fixes
+
+* Java 11 вместо 17 и сообщения об ошибках на английском ([5e029cb](https://github.com/[secure]/lynx-crypto/commit/5e029cbe8ba3ff2c0ef8825e9b028213ca9756ae))
+
+### 🛠️ Other changes
+
+* bun 1.4.0 в CI и джоба проверки цепочки поставок ([3f7bea9](https://github.com/[secure]/lynx-crypto/commit/3f7bea9dac72c38e449b6031ea205ea7ef7ebd47))
+
 ## [1.0.2](https://github.com/[secure]/lynx-crypto/compare/v1.0.1...v1.0.2) (2026-08-21)
 
 ### 🐛 Bug Fixes
