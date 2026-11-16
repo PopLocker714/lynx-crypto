@@ -78,4 +78,4 @@ jobs:
           GIT_AUTHOR_EMAIL: '${{ github.actor }}@users.noreply.github.com'
           GIT_COMMITTER_NAME: ${{ github.actor }}
           GIT_COMMITTER_EMAIL: '${{ github.actor }}@users.noreply.github.com'
-        run: bun run release ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: ${{ inputs.dry_run && 'bun run release:dry-run' || 'bun run release' }}

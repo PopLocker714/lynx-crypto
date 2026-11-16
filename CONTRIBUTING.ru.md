@@ -65,6 +65,25 @@ host-совместимая зависимость; обновление тре�
 в комментарии относится только к этой декларации. Владелец — Lynx Lab; источник —
 standalone Android Lint 2026-11-16; пересмотр до 2026-12-16 или при обновлении host-профиля.
 
+## Исключения dependency audit
+
+`bun run check:audit` выполняет настоящий Bun audit с ровно двумя временными исключениями.
+Guard падает после 2026-12-16 или при изменении bun.lock: новый граф требует review до
+обновления разрешённого hash. Владелец — Lynx Lab. Обе уязвимости остаются неисправленными
+в release-only bundle npm 11.21.2; они приняты как исключения, а не объявлены исправленными:
+
+- [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4): glob 13.0.6 может продолжать обход после отмены AbortSignal. Цепочка: semantic-release → @semantic-release/npm → npm (и его tooling) → glob. Наши checks не вызывают этот путь обхода/отмены.
+- [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249): minimatch 10.2.5/10.2.6 усиливает обработку подконтрольных атакующему patterns при optimizationLevel >= 2. Владелец — то же release-only дерево npm; checks не принимают недоверенные glob patterns через этот путь.
+
+Публикация заблокирована. Пересмотр обязателен до снятия блокировки, изменения dependency
+graph или приёма недоверенных patterns. Остальные advisories роняют audit. Исправленные
+glob 14.0.2 / minimatch 11.0.1 нарушают upstream ranges; принудительного major override нет.
+`npm: 11.21.2` — совместимый точечный override: фактические bundled brace-expansion,
+selector parser, undici и ip-address проверены, потому что изменение одного bun.lock
+не заменяло уязвимые файлы в bundle npm 11.19.0. Vitest остаётся на совместимом patch
+4.1.12; исправленные Vite и остальные затронутые transitives закреплены в bun.lock.
+Runtime-зависимости crypto не добавлены.
+
 ## Consumer gate и физический QA
 
 В изолированном Sparkling fixture установите точный tarball командой
@@ -87,8 +106,8 @@ IOS_DEPLOYMENT_TARGET. Зависимости/Pods должны быть уст�
 ## Состояние релиза
 
 Публикация намеренно заблокирована `scripts/release-preflight.mjs` в ручном Release
-workflow. Конфигурация semantic-release сохранена; dry-run доступен после reusable CI
-того же commit. Это известный незавершённый этап релиза, не immutable-artifact gate.
+workflow и entrypoints `release`/`prepublishOnly`. Конфигурация semantic-release сохранена; dry-run доступен после reusable CI
+того же commit командой `bun run release:dry-run`. Это известный незавершённый этап релиза, не immutable-artifact gate.
 Следующий шаг: подготовка version/changelog → immutable tarball → consumer QA этого
 tarball → публикация точно того же tarball. Не обходите блокировку через environment.
 Публикация требует отдельного согласования.

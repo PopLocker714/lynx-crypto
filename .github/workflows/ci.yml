@@ -39,7 +39,7 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
-      - run: bun audit
+      - run: bun run check:audit
       - run: bun dedupe --check
       - run: bun pm licenses
 

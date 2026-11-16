@@ -1,7 +1,7 @@
 {
     "name": "@lynx-lab/crypto",
     "version": "1.0.3",
-    "description": "Cryptographically secure random values for Lynx \u2014 crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
+    "description": "Cryptographically secure random values for Lynx — crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
     "license": "MIT",
     "author": "PopLocker714",
     "type": "module",
@@ -59,14 +59,16 @@
         "format": "biome format --write .",
         "test": "vitest run",
         "prepack": "bun run build",
-        "prepublishOnly": "bun run check",
-        "release": "semantic-release",
+        "prepublishOnly": "bun scripts/release-preflight.mjs && bun run check",
+        "release": "bun scripts/release-preflight.mjs && semantic-release",
         "check:package": "bun scripts/check-publishable.mjs",
         "check": "bun run lint && bun run typecheck && bun run test && bun run build && bun run check:package",
         "format:native": "bun scripts/native-tools.mjs format",
         "check:android": "bun scripts/check-android.mjs",
         "check:ios": "bun scripts/check-ios.mjs",
-        "check:consumer": "bun scripts/check-consumer.mjs"
+        "check:consumer": "bun scripts/check-consumer.mjs",
+        "check:audit": "bun scripts/check-audit.mjs",
+        "release:dry-run": "semantic-release --dry-run"
     },
     "peerDependencies": {
         "@lynx-js/types": "^4.0.0"
@@ -85,11 +87,14 @@
         "conventional-changelog-conventionalcommits": "^9.0.0",
         "semantic-release": "^25.0.9",
         "typescript": "5.9.3",
-        "vitest": "^4.1.11"
+        "vitest": "4.1.12"
     },
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org/"
     },
-    "packageManager": "bun@1.4.0"
+    "packageManager": "bun@1.4.0",
+    "overrides": {
+        "npm": "11.21.2"
+    }
 }

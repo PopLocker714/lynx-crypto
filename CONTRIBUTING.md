@@ -63,6 +63,25 @@ host-compatible dependency stays pinned; upgrading it requires separate consumer
 The inline suppression applies only to that declaration. Owner: Lynx Lab; source:
 standalone Android Lint 2026-11-16; review by 2026-12-16 or a host profile upgrade.
 
+## Dependency audit exceptions
+
+`bun run check:audit` runs the real Bun audit with exactly two temporary exceptions.
+The guard fails after 2026-12-16 or when bun.lock changes, so a new graph requires
+review before updating the approved hash. Owner: Lynx Lab. Both advisories remain
+unfixed in the release-only npm 11.21.2 bundle; they are accepted, not reported as fixed:
+
+- [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4): glob 13.0.6 can continue traversal after an AbortSignal cancellation. Chain: semantic-release → @semantic-release/npm → npm (and npm tooling) → glob. Our checks do not invoke this traversal/cancellation path.
+- [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249): minimatch 10.2.5/10.2.6 can amplify attacker-controlled patterns with optimizationLevel >= 2. The same release-only npm tree owns it; our checks accept no untrusted glob pattern through that path.
+
+Publication is blocked. Reassess both exceptions before removing that blocker, changing
+the dependency graph, or accepting untrusted patterns. Other advisories still fail audit.
+The fixed releases glob 14.0.2 / minimatch 11.0.1 violate upstream dependency ranges;
+there is no forced major override. `npm: 11.21.2` is a compatible targeted override:
+its actual bundled brace-expansion, selector parser, undici and ip-address were checked,
+because updating Bun's lock alone did not replace vulnerable files bundled in npm 11.19.0.
+Vitest stays on the compatible 4.1.12 patch; patched Vite and remaining affected
+transitives are recorded in bun.lock. No runtime dependency was added to crypto.
+
 ## Consumer gate and physical QA
 
 In an isolated Sparkling fixture, install the exact tarball with `bun add /path/package.tgz`,
@@ -85,8 +104,8 @@ scenarios and record exact toolchain/device evidence from [compatibility](./docs
 ## Release status
 
 Publication is deliberately blocked by `scripts/release-preflight.mjs` in the manual
-Release workflow. Existing semantic-release configuration is retained; dry-run remains
-available after same-commit reusable CI checks. This is a known unfinished release step,
+Release workflow, `release` and `prepublishOnly` entrypoints. Existing semantic-release configuration is retained; dry-run remains
+available as `bun run release:dry-run` after same-commit reusable CI checks. This is a known unfinished release step,
 not an immutable-artifact gate. Required follow-up: prepare version/changelog → immutable
 tarball → consumer QA against that tarball → publish exactly that tarball. Do not remove
 the blocker by supplying an environment bypass. Publication requires separate approval.
