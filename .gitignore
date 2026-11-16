@@ -7,3 +7,7 @@ android/.gradle/
 android-check/build/
 android-check/.gradle/
 android-check/local.properties
+
+.tools/
+artifacts/
+android-check/.kotlin/

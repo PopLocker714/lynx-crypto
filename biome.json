@@ -1,7 +1,26 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
     "files": {
-        "includes": ["**/*.ts", "**/*.mjs", "**/*.cjs", "**/*.json", "!dist", "!android/build"]
+        "includes": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/*.json",
+            "**/*.jsonc",
+            "!dist",
+            "!coverage",
+            "!android/build",
+            "!android/.gradle",
+            "!android-check/build",
+            "!android-check/.gradle",
+            "!ios/build",
+            "!ios/Pods",
+            "!.tools",
+            "!artifacts"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -19,7 +38,10 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true
+            "preset": "recommended",
+            "suspicious": {
+                "noExplicitAny": "error"
+            }
         }
     }
 }

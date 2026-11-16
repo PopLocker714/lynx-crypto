@@ -23,6 +23,7 @@
 }
 
 - (instancetype)initWithParam:(id)param {
+    (void)param;
     return [self init];
 }
 

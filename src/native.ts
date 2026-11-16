@@ -1,3 +1,4 @@
+/** Synchronous native bridge contract. Public wrappers validate returned values at runtime. */
 export interface LynxCryptoNative {
     /** base64 ровно из `byteLength` байт CSPRNG, либо '' при отказе. */
     randomBytesBase64(byteLength: number): string
@@ -37,10 +38,13 @@ export function getNativeModule(): LynxCryptoNative {
         )
     }
 
-    const candidate = NativeModules[MODULE_NAME] as Partial<LynxCryptoNative> | undefined
+    const candidate: unknown = NativeModules[MODULE_NAME]
 
     if (
-        !candidate ||
+        typeof candidate !== 'object' ||
+        candidate === null ||
+        !('randomBytesBase64' in candidate) ||
+        !('randomUUID' in candidate) ||
         typeof candidate.randomBytesBase64 !== 'function' ||
         typeof candidate.randomUUID !== 'function'
     ) {
@@ -56,5 +60,7 @@ export function getNativeModule(): LynxCryptoNative {
         )
     }
 
+    // The method shape is checked here; untrusted return values are validated by
+    // getRandomValues/randomUUID before reaching callers.
     return candidate as LynxCryptoNative
 }

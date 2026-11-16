@@ -16,8 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   release:
     name: Release
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -49,10 +53,14 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
 
       - name: Install npm dependencies (bun)
-        run: bun install
+        run: bun install --frozen-lockfile
 
-      - name: Build lib
-        run: bun run build
+      - name: Verify release artifact policy
+        if: ${{ !inputs.dry_run }}
+        run: bun scripts/release-preflight.mjs
+
+      - name: Check package
+        run: bun run check
 
       - name: Release
         env:

@@ -4,12 +4,10 @@
         "lib": ["ES2022"],
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "verbatimModuleSyntax": true,
-        "skipLibCheck": true,
         "noEmit": true,
-        "types": ["vitest/globals"]
+        "types": []
     },
-    "include": ["src", "vitest.config.ts"]
+    "include": ["src"],
+    "extends": "./tsconfig.strict.json",
+    "exclude": ["src/__tests__"]
 }

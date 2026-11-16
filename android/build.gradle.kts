@@ -41,6 +41,15 @@ android {
     // только с KGP 1.9, а шаблон на 1.8.10.
     kotlinOptions {
         jvmTarget = "11"
+        if (project.findProperty("lynxCryptoStrictChecks") == "true") {
+            // Standalone KGP 2.0.21: kapt uses language 1.9. Keep host defaults untouched.
+            languageVersion = "1.9"
+            allWarningsAsErrors = true
+        }
+    }
+    lint {
+        warningsAsErrors = project.findProperty("lynxCryptoStrictChecks") == "true"
+        abortOnError = true
     }
 }
 
@@ -51,6 +60,9 @@ dependencies {
 
     // Сгенерированный LynxLibraryProviderImpl помечается @androidx.annotation.Keep,
     // поэтому androidx.annotation должен быть на compile classpath.
+    // Keep the existing host-compatible dependency profile; upgrades need consumer QA.
+    // Owner: Lynx Lab. Revisit by 2026-12-16. See CONTRIBUTING.md.
+    //noinspection GradleDependency
     compileOnly("androidx.annotation:annotation:1.9.1")
 
     kapt("org.lynxsdk.lynx:lynx-processor:4.0.1")

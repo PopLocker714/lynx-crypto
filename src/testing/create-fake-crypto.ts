@@ -1,15 +1,16 @@
 import { encodeBase64 } from '../base64.js'
 import type { LynxCryptoNative } from '../native.js'
 
+/** Deterministic, non-cryptographic test configuration. */
 export interface FakeCryptoOptions {
     /** Детерминированное зерно, чтобы тесты были воспроизводимы. */
-    seed?: number
+    seed?: number | undefined
     /** Вернуть меньше байт, чем попросили: проверка пути короткого чтения. */
-    truncateTo?: number
+    truncateTo?: number | undefined
     /** Вернуть '' — имитация отказа нативного CSPRNG. */
-    fail?: boolean
+    fail?: boolean | undefined
     /** Вернуть заведомо не-v4 UUID. */
-    badUuid?: boolean
+    badUuid?: boolean | undefined
 }
 
 /**

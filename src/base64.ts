@@ -8,6 +8,21 @@ const LOOKUP = /* @__PURE__ */ (() => {
     return t
 })()
 
+/** Validate the entire bridge response before the bounded decoder can truncate it. */
+export function decodedBase64Length(input: string): number | null {
+    // Preserve the existing whitespace, URL-safe and unpadded base64 support.
+    const compact = input.replace(/\s/g, '')
+    if (!/^[A-Za-z0-9+/_-]*={0,2}$/.test(compact)) return null
+    const paddingAt = compact.indexOf('=')
+    const digits = paddingAt === -1 ? compact.length : paddingAt
+    const padding = compact.length - digits
+    if (digits % 4 === 1) return null
+    if (padding > 0 && (compact.length % 4 !== 0 || padding !== (4 - (digits % 4)) % 4)) {
+        return null
+    }
+    return Math.floor((digits * 6) / 8)
+}
+
 /**
  * Декодирует base64 прямо в `out` и возвращает число записанных байт.
  *

@@ -1,12 +1,14 @@
-import { decodeBase64Into } from './base64.js'
+import { decodeBase64Into, decodedBase64Length } from './base64.js'
 import { domError } from './errors.js'
 import { getNativeModule } from './native.js'
 
 export type { LynxCryptoNative } from './native.js'
 export { setNativeModule } from './native.js'
 
+/** Lowercase RFC 4122 v4 UUID returned by {@link randomUUID}. */
 export type UUID = `${string}-${string}-${string}-${string}-${string}`
 
+/** Integer views accepted by {@link getRandomValues}; byteLength is limited to 65,536. */
 export type IntegerTypedArray =
     | Int8Array
     | Uint8Array
@@ -22,15 +24,24 @@ const MAX_BYTES = 65536
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
-function isFloatView(value: ArrayBufferView): boolean {
-    const g = globalThis as Record<string, unknown>
-    const Float16 = g.Float16Array as (new () => unknown) | undefined
-    return (
-        value instanceof Float32Array ||
-        value instanceof Float64Array ||
-        (typeof Float16 === 'function' && value instanceof (Float16 as never))
-    )
-}
+// The intrinsic getter reads the internal TypedArray kind across realms and ignores
+// an own Symbol.toStringTag property. DataView has no TypedArray kind.
+const typedArrayKind = Object.getOwnPropertyDescriptor(
+    Object.getPrototypeOf(Uint8Array.prototype),
+    Symbol.toStringTag
+)?.get
+
+const INTEGER_ARRAY_KINDS = new Set([
+    'Int8Array',
+    'Uint8Array',
+    'Uint8ClampedArray',
+    'Int16Array',
+    'Uint16Array',
+    'Int32Array',
+    'Uint32Array',
+    'BigInt64Array',
+    'BigUint64Array',
+])
 
 /**
  * WebCrypto `crypto.getRandomValues`.
@@ -43,14 +54,14 @@ function isFloatView(value: ArrayBufferView): boolean {
  * Поэтому запись на месте делает обёртка, а не нативный метод.
  */
 export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
-    if (!ArrayBuffer.isView(array) || array instanceof DataView) {
+    const kind: unknown = ArrayBuffer.isView(array) ? typedArrayKind?.call(array) : undefined
+    if (typeof kind !== 'string' || !INTEGER_ARRAY_KINDS.has(kind)) {
         throw domError(
             'TypeMismatchError',
-            '@lynx-lab/crypto: getRandomValues() expects an integer TypedArray'
+            typeof kind === 'string' && kind.startsWith('Float')
+                ? '@lynx-lab/crypto: float typed arrays are not allowed'
+                : '@lynx-lab/crypto: getRandomValues() expects an integer TypedArray'
         )
-    }
-    if (isFloatView(array)) {
-        throw domError('TypeMismatchError', '@lynx-lab/crypto: float typed arrays are not allowed')
     }
     if (array.byteLength > MAX_BYTES) {
         throw domError(
@@ -60,11 +71,18 @@ export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
     }
     if (array.byteLength === 0) return array
 
-    const encoded = getNativeModule().randomBytesBase64(array.byteLength)
+    const encoded: unknown = getNativeModule().randomBytesBase64(array.byteLength)
 
     // byteOffset учитывается, поэтому вид на часть большего буфера работает.
     const view = new Uint8Array(array.buffer, array.byteOffset, array.byteLength)
-    const written = decodeBase64Into(encoded, view)
+    if (typeof encoded !== 'string') {
+        throw new TypeError('@lynx-lab/crypto: native randomBytesBase64() returned a non-string')
+    }
+    const written = decodedBase64Length(encoded)
+    if (written === null) {
+        view.fill(0)
+        throw new Error('@lynx-lab/crypto: native returned malformed base64')
+    }
 
     if (written !== array.byteLength) {
         // Никогда не отдаём наполовину случайный буфер. Короткое чтение означает,
@@ -73,14 +91,17 @@ export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
         throw new Error(`@lynx-lab/crypto: native returned ${written} of ${array.byteLength} bytes`)
     }
 
+    decodeBase64Into(encoded, view)
     return array
 }
 
 /** WebCrypto `crypto.randomUUID`. Lowercase RFC 4122 v4. */
 export function randomUUID(): UUID {
-    const value = getNativeModule().randomUUID()
-    if (!UUID_V4.test(value)) {
-        throw new Error(`@lynx-lab/crypto: native randomUUID() returned a non-v4 value: ${value}`)
+    const value: unknown = getNativeModule().randomUUID()
+    if (typeof value !== 'string' || !UUID_V4.test(value)) {
+        throw new Error(
+            `@lynx-lab/crypto: native randomUUID() returned a non-v4 value: ${typeof value === 'string' ? value : '<non-string>'}`
+        )
     }
     return value as UUID
 }

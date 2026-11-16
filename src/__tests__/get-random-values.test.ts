@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { getRandomValues, setNativeModule } from '../index.js'
 import { createFakeCrypto } from '../testing/index.js'
@@ -89,5 +90,75 @@ describe('getRandomValues', () => {
     it('отказ нативного CSPRNG это ошибка, а не тихий нуль', () => {
         setNativeModule(createFakeCrypto({ fail: true }))
         expect(() => getRandomValues(new Uint8Array(16))).toThrowError(/returned 0 of 16/)
+    })
+})
+
+describe('bridge response validation', () => {
+    it.each(['AQIDBA==', 'AQ!ID', 'AQID=garbage', 'AQID=', 'A', 'AQ==='])(
+        'rejects invalid or oversized base64: %s',
+        (encoded) => {
+            setNativeModule({ randomBytesBase64: () => encoded, randomUUID: () => '' })
+            const bytes = new Uint8Array(3).fill(42)
+            expect(() => getRandomValues(bytes)).toThrow()
+            expect(Array.from(bytes)).toEqual([0, 0, 0])
+        }
+    )
+
+    it.each(['AQID', ' AQ\nID\t', '+/8=', '-_8=', '+/8'])(
+        'preserves valid supported encodings: %s',
+        (encoded) => {
+            const expected = Buffer.from(encoded, 'base64')
+            setNativeModule({ randomBytesBase64: () => encoded, randomUUID: () => '' })
+            const bytes = new Uint8Array(expected.length)
+            expect(getRandomValues(bytes)).toBe(bytes)
+            expect(Array.from(bytes)).toEqual(Array.from(expected))
+        }
+    )
+
+    it.each([null, undefined, 123, { toString: () => 'AQID' }])(
+        'rejects non-string native responses',
+        (encoded) => {
+            // Deliberately violate the native signature to exercise the runtime boundary.
+            setNativeModule({ randomBytesBase64: () => encoded as never, randomUUID: () => '' })
+            expect(() => getRandomValues(new Uint8Array(3))).toThrow(TypeError)
+        }
+    )
+
+    it('rejects foreign-realm float arrays and DataView, including a spoofed tag', () => {
+        for (const expression of [
+            'new Float32Array(4)',
+            'new Float64Array(4)',
+            'new DataView(new ArrayBuffer(8))',
+        ]) {
+            const value = runInNewContext(expression)
+            Object.defineProperty(value, Symbol.toStringTag, { value: 'Uint8Array' })
+            expect(() => getRandomValues(value)).toThrowError(
+                expect.objectContaining({ name: 'TypeMismatchError' })
+            )
+        }
+    })
+
+    it('accepts foreign-realm integer arrays and BigInt arrays', () => {
+        setNativeModule(createFakeCrypto())
+        for (const expression of [
+            'new Uint8Array(4)',
+            'new BigInt64Array(2)',
+            'new BigUint64Array(2)',
+        ]) {
+            const value = runInNewContext(expression)
+            expect(getRandomValues(value)).toBe(value)
+        }
+    })
+
+    it('native exceptions fail without returning success or mutating the view', () => {
+        setNativeModule({
+            randomBytesBase64: () => {
+                throw new Error('provider failed')
+            },
+            randomUUID: () => '',
+        })
+        const bytes = new Uint8Array(3).fill(42)
+        expect(() => getRandomValues(bytes)).toThrow('provider failed')
+        expect(Array.from(bytes)).toEqual([42, 42, 42])
     })
 })

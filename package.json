@@ -1,7 +1,7 @@
 {
     "name": "@lynx-lab/crypto",
     "version": "1.0.3",
-    "description": "Cryptographically secure random values for Lynx — crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
+    "description": "Cryptographically secure random values for Lynx \u2014 crypto.getRandomValues and crypto.randomUUID, backed by SecureRandom and SecRandomCopyBytes.",
     "license": "MIT",
     "author": "PopLocker714",
     "type": "module",
@@ -39,7 +39,7 @@
     "files": [
         "dist",
         "src/**/*.ts",
-        "!src/__tests__",
+        "!src/__tests__/**",
         "android",
         "!android/build",
         "!android/.gradle",
@@ -47,17 +47,26 @@
         "lynx.lib.json",
         "LICENSE",
         "README.md",
-        "README.ru.md"
+        "README.ru.md",
+        "docs",
+        "CONTRIBUTING.md",
+        "CONTRIBUTING.ru.md"
     ],
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
-        "typecheck": "tsc -p tsconfig.json --noEmit",
-        "lint": "biome check .",
+        "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+        "lint": "biome check --error-on-warnings .",
         "format": "biome format --write .",
         "test": "vitest run",
         "prepack": "bun run build",
-        "prepublishOnly": "node scripts/check-publishable.mjs",
-        "release": "semantic-release"
+        "prepublishOnly": "bun run check",
+        "release": "semantic-release",
+        "check:package": "bun scripts/check-publishable.mjs",
+        "check": "bun run lint && bun run typecheck && bun run test && bun run build && bun run check:package",
+        "format:native": "bun scripts/native-tools.mjs format",
+        "check:android": "bun scripts/check-android.mjs",
+        "check:ios": "bun scripts/check-ios.mjs",
+        "check:consumer": "bun scripts/check-consumer.mjs"
     },
     "peerDependencies": {
         "@lynx-js/types": "^4.0.0"
@@ -68,13 +77,14 @@
         }
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.0.0",
+        "@biomejs/biome": "2.5.9",
         "@lynx-js/types": "^4.1.0",
         "@semantic-release/changelog": "^6.0.3",
         "@semantic-release/git": "^10.0.1",
+        "@types/node": "22.19.21",
         "conventional-changelog-conventionalcommits": "^9.0.0",
         "semantic-release": "^25.0.9",
-        "typescript": "^5.9.0",
+        "typescript": "5.9.3",
         "vitest": "^4.1.11"
     },
     "publishConfig": {

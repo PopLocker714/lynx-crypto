@@ -35,3 +35,11 @@ describe('randomUUID', () => {
         expect(() => randomUUID()).toThrowError(/non-v4/)
     })
 })
+
+it.each([null, undefined, 123, { toString: () => '3f2504e0-4f89-41d3-9a0c-0305e82c3301' }])(
+    'rejects non-string UUIDs without coercion',
+    (value) => {
+        setNativeModule({ randomBytesBase64: () => '', randomUUID: () => value as never })
+        expect(() => randomUUID()).toThrow(/non-v4/)
+    }
+)

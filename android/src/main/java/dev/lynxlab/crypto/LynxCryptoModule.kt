@@ -14,8 +14,10 @@ private const val MAX_BYTES = 65536
 /**
  * Android-половина `@lynx-lab/crypto`.
  *
- * Ни один метод не бросает. Все ошибки спецификации (QuotaExceededError,
- * TypeMismatchError) поднимаются в TypeScript, потому что судьба броска
+ * Все ошибки спецификации (QuotaExceededError,
+ * TypeMismatchError) поднимаются в TypeScript. Ошибка SecureRandom может
+ * бросить; JS не считает отсутствующий или некорректный ответ успехом.
+ * Судьба броска
  * через мост Lynx не подтверждена ни на одной платформе, а WebCrypto и так
  * относит эти ошибки к JS-слою. Контракт натива один: вернуть ровно
  * byteLength байт CSPRNG в base64 либо пустую строку. TS считает короткое
