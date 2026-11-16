@@ -26,25 +26,26 @@ private const val MAX_BYTES = 65536
  *     LynxEnv.inst().registerModule("LynxCryptoModule", LynxCryptoModule::class.java)
  */
 @LynxNativeModule(name = "LynxCryptoModule")
-class LynxCryptoModule(context: Context) : LynxModule(context) {
+class LynxCryptoModule(
+    context: Context,
+) : LynxModule(context) {
+    // SecureRandom потокобезопасен и самозасевается. Держим на экземпляр
+    // модуля, а не на вызов: дорогая часть это конструирование.
+    private val rng = SecureRandom()
 
-  // SecureRandom потокобезопасен и самозасевается. Держим на экземпляр
-  // модуля, а не на вызов: дорогая часть это конструирование.
-  private val rng = SecureRandom()
+    /**
+     * Возврат 'T' (String), параметр 'i' (int). Оба из
+     * LynxMethodWrapper.commonTypeToChar, проверено на теге 4.0.1.
+     */
+    @LynxMethod
+    fun randomBytesBase64(byteLength: Int): String {
+        if (byteLength <= 0 || byteLength > MAX_BYTES) return ""
+        val out = ByteArray(byteLength)
+        rng.nextBytes(out)
+        return Base64.encodeToString(out, Base64.NO_WRAP)
+    }
 
-  /**
-   * Возврат 'T' (String), параметр 'i' (int). Оба из
-   * LynxMethodWrapper.commonTypeToChar, проверено на теге 4.0.1.
-   */
-  @LynxMethod
-  fun randomBytesBase64(byteLength: Int): String {
-    if (byteLength <= 0 || byteLength > MAX_BYTES) return ""
-    val out = ByteArray(byteLength)
-    rng.nextBytes(out)
-    return Base64.encodeToString(out, Base64.NO_WRAP)
-  }
-
-  /** Возврат 'T'. java.util.UUID.toString() уже lowercase v4. */
-  @LynxMethod
-  fun randomUUID(): String = UUID.randomUUID().toString()
+    /** Возврат 'T'. java.util.UUID.toString() уже lowercase v4. */
+    @LynxMethod
+    fun randomUUID(): String = UUID.randomUUID().toString()
 }

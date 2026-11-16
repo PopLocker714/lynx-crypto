@@ -1,7 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <Lynx/LynxModule.h>
 
-
 // Макрос LynxNativeModule появился только в Lynx 4.x. На 3.x его нет, и тогда
 // `@LynxNativeModule("...")` это `@` плюс неизвестный идентификатор, то есть
 // ошибка компиляции `unexpected '@' in program`, а следом ещё и
@@ -33,8 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  *     [config registerModule:LynxCryptoModule.class];
  */
-@LynxNativeModule("LynxCryptoModule")
-@interface LynxCryptoModule : NSObject <LynxModule>
+@LynxNativeModule("LynxCryptoModule") @interface LynxCryptoModule : NSObject<LynxModule>
 @end
 
 NS_ASSUME_NONNULL_END

@@ -6,15 +6,15 @@
  * не совпадёт.
  */
 export function domError(name: string, message: string): Error {
-  const Ctor = (globalThis as Record<string, unknown>).DOMException
-  if (typeof Ctor === 'function') {
-    try {
-      return new (Ctor as new (m: string, n: string) => Error)(message, name)
-    } catch {
-      /* падаем ниже */
+    const Ctor = (globalThis as Record<string, unknown>).DOMException
+    if (typeof Ctor === 'function') {
+        try {
+            return new (Ctor as new (m: string, n: string) => Error)(message, name)
+        } catch {
+            /* падаем ниже */
+        }
     }
-  }
-  const error = new Error(message)
-  error.name = name
-  return error
+    const error = new Error(message)
+    error.name = name
+    return error
 }

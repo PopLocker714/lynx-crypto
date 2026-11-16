@@ -8,29 +8,28 @@ export { setNativeModule } from './native.js'
 export type UUID = `${string}-${string}-${string}-${string}-${string}`
 
 export type IntegerTypedArray =
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | BigInt64Array
-  | BigUint64Array
+    | Int8Array
+    | Uint8Array
+    | Uint8ClampedArray
+    | Int16Array
+    | Uint16Array
+    | Int32Array
+    | Uint32Array
+    | BigInt64Array
+    | BigUint64Array
 
 const MAX_BYTES = 65536
 
-const UUID_V4 =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 function isFloatView(value: ArrayBufferView): boolean {
-  const g = globalThis as Record<string, unknown>
-  const Float16 = g.Float16Array as (new () => unknown) | undefined
-  return (
-    value instanceof Float32Array ||
-    value instanceof Float64Array ||
-    (typeof Float16 === 'function' && value instanceof (Float16 as never))
-  )
+    const g = globalThis as Record<string, unknown>
+    const Float16 = g.Float16Array as (new () => unknown) | undefined
+    return (
+        value instanceof Float32Array ||
+        value instanceof Float64Array ||
+        (typeof Float16 === 'function' && value instanceof (Float16 as never))
+    )
 }
 
 /**
@@ -44,53 +43,46 @@ function isFloatView(value: ArrayBufferView): boolean {
  * Поэтому запись на месте делает обёртка, а не нативный метод.
  */
 export function getRandomValues<T extends IntegerTypedArray>(array: T): T {
-  if (!ArrayBuffer.isView(array) || array instanceof DataView) {
-    throw domError(
-      'TypeMismatchError',
-      '@lynx-lab/crypto: getRandomValues() expects an integer TypedArray'
-    )
-  }
-  if (isFloatView(array)) {
-    throw domError(
-      'TypeMismatchError',
-      '@lynx-lab/crypto: float typed arrays are not allowed'
-    )
-  }
-  if (array.byteLength > MAX_BYTES) {
-    throw domError(
-      'QuotaExceededError',
-      `@lynx-lab/crypto: byteLength ${array.byteLength} exceeds ${MAX_BYTES}`
-    )
-  }
-  if (array.byteLength === 0) return array
+    if (!ArrayBuffer.isView(array) || array instanceof DataView) {
+        throw domError(
+            'TypeMismatchError',
+            '@lynx-lab/crypto: getRandomValues() expects an integer TypedArray'
+        )
+    }
+    if (isFloatView(array)) {
+        throw domError('TypeMismatchError', '@lynx-lab/crypto: float typed arrays are not allowed')
+    }
+    if (array.byteLength > MAX_BYTES) {
+        throw domError(
+            'QuotaExceededError',
+            `@lynx-lab/crypto: byteLength ${array.byteLength} exceeds ${MAX_BYTES}`
+        )
+    }
+    if (array.byteLength === 0) return array
 
-  const encoded = getNativeModule().randomBytesBase64(array.byteLength)
+    const encoded = getNativeModule().randomBytesBase64(array.byteLength)
 
-  // byteOffset учитывается, поэтому вид на часть большего буфера работает.
-  const view = new Uint8Array(array.buffer, array.byteOffset, array.byteLength)
-  const written = decodeBase64Into(encoded, view)
+    // byteOffset учитывается, поэтому вид на часть большего буфера работает.
+    const view = new Uint8Array(array.buffer, array.byteOffset, array.byteLength)
+    const written = decodeBase64Into(encoded, view)
 
-  if (written !== array.byteLength) {
-    // Никогда не отдаём наполовину случайный буфер. Короткое чтение означает,
-    // что нативный CSPRNG отказал или мост обрезал. Оба случая должны быть громкими.
-    view.fill(0)
-    throw new Error(
-      `@lynx-lab/crypto: native returned ${written} of ${array.byteLength} bytes`
-    )
-  }
+    if (written !== array.byteLength) {
+        // Никогда не отдаём наполовину случайный буфер. Короткое чтение означает,
+        // что нативный CSPRNG отказал или мост обрезал. Оба случая должны быть громкими.
+        view.fill(0)
+        throw new Error(`@lynx-lab/crypto: native returned ${written} of ${array.byteLength} bytes`)
+    }
 
-  return array
+    return array
 }
 
 /** WebCrypto `crypto.randomUUID`. Lowercase RFC 4122 v4. */
 export function randomUUID(): UUID {
-  const value = getNativeModule().randomUUID()
-  if (!UUID_V4.test(value)) {
-    throw new Error(
-      `@lynx-lab/crypto: native randomUUID() returned a non-v4 value: ${value}`
-    )
-  }
-  return value as UUID
+    const value = getNativeModule().randomUUID()
+    if (!UUID_V4.test(value)) {
+        throw new Error(`@lynx-lab/crypto: native randomUUID() returned a non-v4 value: ${value}`)
+    }
+    return value as UUID
 }
 
 /**
@@ -101,18 +93,17 @@ export function randomUUID(): UUID {
  * lynx-core/index.card.ts), поэтому это opt-in, а не побочный эффект импорта.
  */
 export function install(): void {
-  const g = globalThis as Record<string, unknown>
-  try {
-    if (typeof g.crypto !== 'object' || g.crypto === null) g.crypto = {}
-    const c = g.crypto as Record<string, unknown>
-    if (typeof c.getRandomValues !== 'function')
-      c.getRandomValues = getRandomValues
-    if (typeof c.randomUUID !== 'function') c.randomUUID = randomUUID
-  } catch (cause) {
-    throw new Error(
-      '@lynx-lab/crypto: could not install onto globalThis.crypto; import the ' +
-        'named exports directly instead',
-      { cause }
-    )
-  }
+    const g = globalThis as Record<string, unknown>
+    try {
+        if (typeof g.crypto !== 'object' || g.crypto === null) g.crypto = {}
+        const c = g.crypto as Record<string, unknown>
+        if (typeof c.getRandomValues !== 'function') c.getRandomValues = getRandomValues
+        if (typeof c.randomUUID !== 'function') c.randomUUID = randomUUID
+    } catch (cause) {
+        throw new Error(
+            '@lynx-lab/crypto: could not install onto globalThis.crypto; import the ' +
+                'named exports directly instead',
+            { cause }
+        )
+    }
 }
