@@ -68,7 +68,8 @@
         "check:ios": "bun scripts/check-ios.mjs",
         "check:consumer": "bun scripts/check-consumer.mjs",
         "check:audit": "bun scripts/check-audit.mjs",
-        "release:dry-run": "semantic-release --dry-run"
+        "release:dry-run": "semantic-release --dry-run",
+        "check:consumer:bindings": "bun scripts/check-consumer-bindings.mjs"
     },
     "peerDependencies": {
         "@lynx-js/types": "^4.0.0"

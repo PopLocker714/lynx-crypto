@@ -86,22 +86,45 @@ Runtime-зависимости crypto не добавлены.
 
 ## Consumer gate и физический QA
 
-В изолированном Sparkling fixture установите точный tarball командой
-`bun add /path/package.tgz`, выполните `bundle exec pod install` в `ios`, затем:
+Поддерживается native-адаптер Sparkling fixture из probe source commit `59dc5e9`:
+Sparkling 2.1.0-rc.36 / Lynx и library plugins 3.9.0, Android `:app`,
+SparklingGo.xcworkspace со SparklingGoInHouse/Debug и SparklingGo/Release.
+Другой layout/schemes требует явно проверенного изменения адаптера. Deployment 15.6 —
+override host build, а не доказательство minimum iOS 12.
+
+В собственном изолированном fixture установите точный архив через `bun add /path/package.tgz`,
+затем выполните `bundle exec pod install` в `ios` после каждой смены пакета или peer context.
+Сохраните app kotlin.kapt / kapt(libs.lynx.processor), settings org.lynxsdk.library-settings
+и app org.lynxsdk.library-build. Sparkling navigation autolink не заменяет регистрацию
+Lynx. Из корня fixture сгенерируйте оба registry:
 
 ```sh
-CONSUMER_ROOT=/absolute/path/to/fixture \
-CONSUMER_TARBALL=/absolute/path/to/package.tgz bun run check:consumer
+./android/gradlew -p android :app:generateDebugLynxLibraryRegistry \
+    :app:generateReleaseLynxLibraryRegistry --no-daemon
+CONSUMER_ROOT=/fixture CONSUMER_TARBALL=/package.tgz bun run check:consumer:bindings
+CONSUMER_ROOT=/fixture CONSUMER_TARBALL=/package.tgz bun run check:consumer
 ```
 
-Команда сравнивает каждый установленный файл пакета с архивом, собирает JS host,
-Android Debug/Release с обязательным R8 mapping и unsigned iOS Debug/Release.
-Defaults: workspace SparklingGo.xcworkspace, schemes SparklingGoInHouse/SparklingGo,
-deployment 15.6. Для закреплённого профиля задайте IOS_DEBUG_SCHEME, IOS_RELEASE_SCHEME,
-IOS_DEPLOYMENT_TARGET. Зависимости/Pods должны быть установлены заранее. Устройства
-не устанавливаются и не используются. Outputs остаются в Android build fixture и
-`ios/build-crypto-consumer`; receipt — `artifacts/consumer-build.json`, статус compile-only.
-Физические сценарии и точные toolchain/device evidence описаны в [совместимости](./docs/compatibility.ru.md).
+Binding-only gate сравнивает каждый installed byte с архивом и читает actual Gradle Kotlin
+compiler sources, runtime project dependencies и Java compiler registry inputs для
+Debug/Release. Для iOS проверяются lock/manifest, PBX source/header phases, scheme UUID,
+зависимости Pods targets и inherited linker configuration. Canonical roots обязаны совпасть
+с установленным архивом; compiled registries должны регистрировать LynxCrypto. Source
+filters, conditional filters, неподдерживаемые xcconfig includes и platform-filtered
+build files отклоняются. Hashes native sources, registry и configuration inputs сохраняются
+в receipt. Старые GlobalStore/Pod paths и registry inputs отклоняются до компиляции;
+gate не исправляет host молча. Реализация и regression tests перенесены из принятого
+secure-store gate c350fce, включая исправление source filters ef61633.
+
+Compile gate сначала собирает JS host, проверяет bindings, затем собирает Android
+Debug/Release с обязательным R8 mapping и unsigned iOS Debug/Release; после build
+повторно проверяет hashes inputs. IOS_DEPLOYMENT_TARGET может задавать закреплённый host
+override; scheme overrides не поддерживаются. Зависимости/Pods должны быть установлены.
+Устройства не устанавливаются и не используются. Outputs остаются в Android build
+fixture и ios/build-crypto-consumer. Receipts: artifacts/consumer-bindings.json
+(binding-only), artifacts/consumer-build.json (compile-only). Ни один не утверждает
+physical QA; отдельные сценарии и exact artifact/toolchain/device evidence описаны
+в [совместимости](./docs/compatibility.ru.md).
 
 ## Состояние релиза
 
