@@ -19,9 +19,10 @@ Cryptographically secure `getRandomValues` and `randomUUID` for Lynx, using Andr
 | `crypto.subtle`, hashing, encryption | Not provided | Not provided |
 
 Sparkling is the first integration host. Other Lynx hosts require their own integration
-checks. The standard-v1 candidate is **not yet accepted as stable**: consumer
-Debug/Release, Android R8 and physical-device checks must be tied to its exact tarball.
-Historical npm 1.0.3 results do not verify this candidate. See [compatibility](./docs/compatibility.md).
+checks. The standard-v1 runtime passed physical Android/iOS Debug/Release and Android R8
+on the recorded Sparkling profile. It is **not yet accepted as stable**: minimum OS,
+remote CI and the immutable-artifact release workflow remain open.
+Exact artifacts and scenario limits are in [compatibility](./docs/compatibility.md).
 
 ## Requirements
 
