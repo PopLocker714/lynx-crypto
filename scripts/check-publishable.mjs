@@ -129,7 +129,7 @@ try {
     const dirty =
         execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim().length > 0
     writeFileSync(
-        'artifacts/package.json',
+        'artifacts/package-evidence.json',
         `${JSON.stringify({ sourceCommit, dirty, sha256: hash, tarball: output }, null, 4)}\n`
     )
     console.log(`Source: ${sourceCommit}${dirty ? ' (dirty)' : ''}`)
