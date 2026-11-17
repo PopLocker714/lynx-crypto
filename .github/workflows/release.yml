@@ -3,79 +3,105 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Прогон без публикации: посчитать версию и показать changelog'
-        type: boolean
-        default: false
+      stage:
+        description: Prepare immutable archive or publish an accepted archive
+        type: choice
+        options: [prepare, publish]
+        default: prepare
+      prepare_run_id:
+        description: Successful prepare run ID (publish only)
+        type: string
+      sha256:
+        description: Exact accepted tarball SHA256 (publish only)
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   checks:
+    if: inputs.stage == 'prepare' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
-  release:
-    name: Release
+  prepare:
+    if: inputs.stage == 'prepare' && github.ref == 'refs/heads/main'
     needs: checks
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      # Нужен для npm Trusted Publishing (OIDC). Уже стоит, чтобы после
-      # публикации 1.0.0 можно было выключить NPM_TOKEN одним вычитанием.
-      id-token: write
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          # semantic-release нужна полная история для анализа коммитов
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          # 22.14.0 это пол npm для trusted publishing, не опускать
-          node-version: 22.14.0
-      - name: Setup Bun.js
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.0
-      - name: Cache bun dependencies
-        uses: actions/cache@v5
+      - run: bun install --frozen-lockfile
+      - run: bun run release:prepare
+      - uses: actions/upload-artifact@v4
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          name: release-candidate
+          path: artifacts/release-candidate/
+          if-no-files-found: error
+          retention-days: 90
 
-      - name: Install npm dependencies (bun)
-        run: bun install --frozen-lockfile
+  verify:
+    if: inputs.stage == 'publish' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    env:
+      PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
+      EXPECTED_SHA256: ${{ inputs.sha256 }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-candidate
+          path: artifacts/release-candidate
+          run-id: ${{ inputs.prepare_run_id }}
+          github-token: ${{ github.token }}
+      - run: bun run release:verify
 
-      - name: Verify release artifact policy
-        if: ${{ !inputs.dry_run }}
-        run: bun scripts/release-preflight.mjs
-
-      - name: Check package
-        run: bun run check
-
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # NPM_TOKEN здесь больше нет: публикация идёт через npm Trusted
-          # Publishing (OIDC), права даёт id-token: write выше. Проверено на
-          # релизе 1.0.1: "OIDC token exchange with the npm registry succeeded".
-          #
-          # NPM_CONFIG_PROVENANCE оставлен намеренно. Документация npm обещает,
-          # что под trusted publishing provenance генерируется сама, но есть
-          # публичный отчёт, где флаг всё равно требовался. Строка ничего не
-          # стоит и страхует цепочку provenance.
-          NPM_CONFIG_PROVENANCE: true
-          GIT_AUTHOR_NAME: ${{ github.actor }}
-          GIT_AUTHOR_EMAIL: '${{ github.actor }}@users.noreply.github.com'
-          GIT_COMMITTER_NAME: ${{ github.actor }}
-          GIT_COMMITTER_EMAIL: '${{ github.actor }}@users.noreply.github.com'
-        run: ${{ inputs.dry_run && 'bun run release:dry-run' || 'bun run release' }}
+  publish:
+    if: inputs.stage == 'publish' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-24.04
+    environment: npm-release
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
+      EXPECTED_SHA256: ${{ inputs.sha256 }}
+      GH_TOKEN: ${{ github.token }}
+      NPM_CONFIG_PROVENANCE: 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-candidate
+          path: artifacts/release-candidate
+          run-id: ${{ inputs.prepare_run_id }}
+          github-token: ${{ github.token }}
+      - name: Recheck current advisories and exception expiry
+        run: bun run check:audit
+      - name: Publish accepted bytes through npm OIDC adapter
+        run: bun scripts/release/publish.mjs

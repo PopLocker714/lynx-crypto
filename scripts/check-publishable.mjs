@@ -17,8 +17,10 @@ mkdirSync('artifacts', { recursive: true })
 const examples = mkdtempSync(resolve('artifacts', 'examples-'))
 const temporary = mkdtempSync(join(tmpdir(), 'lynx-crypto-pack-'))
 try {
-    const archive = join(temporary, 'package.tgz')
-    execFileSync('bun', ['pm', 'pack', '--filename', archive], { stdio: 'inherit' })
+    const suppliedArchive = process.env.RELEASE_TARBALL
+    const archive = suppliedArchive ? resolve(suppliedArchive) : join(temporary, 'package.tgz')
+    if (!suppliedArchive)
+        execFileSync('bun', ['pm', 'pack', '--filename', archive], { stdio: 'inherit' })
     execFileSync('tar', ['-xzf', archive, '-C', temporary])
     const root = join(temporary, 'package')
     const metadata = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -102,7 +104,9 @@ try {
     api.setNativeModule(null)
     const exampleFiles = []
     for (const document of ['README.md', 'README.ru.md']) {
-        for (const match of readFileSync(document, 'utf8').matchAll(/```ts\n([\s\S]*?)```/g)) {
+        for (const match of readFileSync(join(root, document), 'utf8').matchAll(
+            /```ts\n([\s\S]*?)```/g
+        )) {
             const file = join(examples, `example-${exampleFiles.length}.ts`)
             writeFileSync(file, match[1])
             exampleFiles.push(file)
@@ -113,6 +117,12 @@ try {
         config,
         JSON.stringify({
             extends: resolve('tsconfig.json'),
+            compilerOptions: {
+                paths: {
+                    '@lynx-lab/crypto': [join(root, 'dist/index.d.ts')],
+                    '@lynx-lab/crypto/testing': [join(root, 'dist/testing/index.d.ts')],
+                },
+            },
             files: exampleFiles,
             include: [],
             exclude: [],
@@ -123,14 +133,14 @@ try {
     })
     const hash = createHash('sha256').update(readFileSync(archive)).digest('hex')
     mkdirSync('artifacts', { recursive: true })
-    const output = resolve('artifacts', `crypto-${hash}.tgz`)
-    renameSync(archive, output)
+    const output = suppliedArchive ? archive : resolve('artifacts', `crypto-${hash}.tgz`)
+    if (!suppliedArchive) renameSync(archive, output)
     const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
     const dirty =
         execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim().length > 0
     writeFileSync(
         'artifacts/package-evidence.json',
-        `${JSON.stringify({ sourceCommit, dirty, sha256: hash, tarball: output }, null, 4)}\n`
+        `${JSON.stringify({ sourceCommit: suppliedArchive ? null : sourceCommit, inspectorCommit: sourceCommit, mode: suppliedArchive ? 'inspect' : 'pack', dirty, sha256: hash, tarball: output }, null, 4)}\n`
     )
     console.log(`Source: ${sourceCommit}${dirty ? ' (dirty)' : ''}`)
     console.log(`check-publishable: ${files.length} files; SHA256 ${hash}\n${output}`)

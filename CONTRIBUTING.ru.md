@@ -128,21 +128,21 @@ physical QA; отдельные сценарии и exact artifact/toolchain/dev
 
 ## Состояние релиза
 
-Публикация намеренно заблокирована `scripts/release-preflight.mjs` в ручном Release
-workflow и entrypoints `release`/`prepublishOnly`. Конфигурация semantic-release сохранена; dry-run доступен после reusable CI
-того же commit командой `bun run release:dry-run`. Это известный незавершённый этап релиза, не immutable-artifact gate.
-Следующий шаг: подготовка version/changelog → immutable tarball → consumer QA этого
-tarball → публикация точно того же tarball. Не обходите блокировку через environment.
-Публикация требует отдельного согласования.
+Прямые `release` и `prepublishOnly` остаются заблокированы. Ручной workflow
+prepare → QA → publish сохраняет один неизменяемый архив; см. [порядок выпуска](./docs/releasing.ru.md).
+Выберите SemVer и закоммитьте финальные version/changelog до подготовки.
+`release:dry-run` — только рекомендательный анализ. Нужны полный source-bound QA и явный
+manual publish; успешные локальные checks сами по себе не разрешают публикацию.
 
 ## Документация
 
 Обновляйте EN/RU-пары вместе. README краткий; точный API, интеграция, реализация и
 совместимость находятся в `docs/` и входят в tarball. Примеры проверяются TypeScript.
 
-## Версию определяют commits
+## Соглашения commits и выбор версии
 
-Версии вручную не меняются: semantic-release читает историю. Commit prefix определяет bump.
+Commit prefix помогает выбрать SemVer. Maintainer выбирает и коммитит финальные
+version/changelog до prepare; анализ semantic-release рекомендательный.
 
 | Prefix | Bump | Раздел CHANGELOG |
 |---|---|---|
@@ -154,4 +154,10 @@ tarball → публикация точно того же tarball. Не обхо
 | `chore:` | patch | 🛠️ Other changes |
 | `BREAKING CHANGE:` в body | major | отдельный раздел |
 
-Commit без распознанного prefix не запускает релиз.
+Ни один commit автоматически не запускает публикацию.
+
+## Выпуск неизменяемого архива
+
+Ручной workflow prepare → QA → publish описан в [порядке выпуска](./docs/releasing.ru.md).
+Он публикует принятый архив без переупаковки semantic-release. Прямая локальная публикация
+заблокирована; нужны финальная версия, полный QA и удалённые настройки OIDC/environment.

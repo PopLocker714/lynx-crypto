@@ -1,0 +1,17 @@
+{
+    "schemaVersion": 1,
+    "repository": "PopLocker714/lynx-crypto",
+    "requiredChecks": [
+        "android-debug",
+        "android-release-r8",
+        "ios-debug",
+        "ios-release",
+        "native-source-bindings",
+        "minimum-android",
+        "minimum-ios",
+        "independent-review",
+        "crypto-types-offsets-quota",
+        "crypto-native-failure",
+        "crypto-randomness-source"
+    ]
+}

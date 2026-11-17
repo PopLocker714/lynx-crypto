@@ -125,22 +125,21 @@ for the separate scenarios in [compatibility](./docs/compatibility.md).
 
 ## Release status
 
-Publication is deliberately blocked by `scripts/release-preflight.mjs` in the manual
-Release workflow, `release` and `prepublishOnly` entrypoints. Existing semantic-release configuration is retained; dry-run remains
-available as `bun run release:dry-run` after same-commit reusable CI checks. This is a known unfinished release step,
-not an immutable-artifact gate. Required follow-up: prepare version/changelog → immutable
-tarball → consumer QA against that tarball → publish exactly that tarball. Do not remove
-the blocker by supplying an environment bypass. Publication requires separate approval.
+Direct `release` and `prepublishOnly` remain blocked. The manual prepare → QA → publish
+workflow now preserves one immutable archive; see [Releasing](./docs/releasing.md).
+Choose SemVer explicitly and commit the final version/changelog before preparation.
+`release:dry-run` provides advisory analysis only. Complete source-bound QA and explicit
+manual publish approval are required; passing local checks does not authorize publication.
 
 ## Documentation
 
 Update EN/RU pairs together. README stays concise; API, integration, implementation and
 compatibility details live in `docs/` and ship in the tarball. Examples must typecheck.
 
-## Commits decide the version
+## Commit conventions and version decision
 
-Versions are never set by hand. `semantic-release` reads the commit history and decides,
-so a commit prefix is a version claim.
+Commit prefixes guide the SemVer decision. The maintainer chooses and commits the final
+version/changelog before prepare; semantic-release analysis is advisory only.
 
 | Prefix | Bump | CHANGELOG section |
 |---|---|---|
@@ -152,4 +151,10 @@ so a commit prefix is a version claim.
 | `chore:` | patch | 🛠️ Other changes |
 | `BREAKING CHANGE:` in the body | major | its own section |
 
-A commit with no recognised prefix triggers no release.
+No commit automatically triggers publication.
+
+## Immutable release workflow
+
+The manual prepare → QA → publish workflow is documented in [Releasing](./docs/releasing.md).
+It publishes the accepted archive without semantic-release repacking. Direct local publication
+remains blocked; final versions, complete QA and remote OIDC/environment setup are still required.

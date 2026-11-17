@@ -12,5 +12,5 @@ Use the existing API → validated bridge → Kotlin/Objective-C structure.
   This is compile-only; physical QA and evidence remain separate.
 - Native tools/profile/exceptions: CONTRIBUTING.md.
 - Update consumer documentation in English and Russian together.
-- Do not publish: the release artifact lifecycle is intentionally blocked pending
-  immutable artifact support. See CONTRIBUTING.md; no bypass variable.
+- Direct local publication is blocked. Manual immutable release lifecycle: docs/releasing.md.
+  Publication still requires explicit authorization and complete QA; no bypass variable.
