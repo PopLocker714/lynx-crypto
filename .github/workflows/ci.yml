@@ -65,7 +65,8 @@ jobs:
 
   ios:
     name: Objective-C format, compile and static analysis
-    runs-on: macos-15
+    # Xcode 27.2 matches the local compiler; pin it instead of the image default.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -73,7 +74,7 @@ jobs:
           bun-version: 1.4.0
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: '27.2'
       - name: Install pinned formatter locally
         run: |
           python3 -m venv .tools/clang-format
